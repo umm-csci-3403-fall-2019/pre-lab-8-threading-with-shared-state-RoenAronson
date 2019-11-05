@@ -44,17 +44,52 @@ public class ThreadedSearch<T> implements Searcher<T>, Runnable {
          * 4 threads, you would give the four threads the ranges [0, 25), [25, 50),
          * [50, 75), and [75, 100) as their sections to search.
          *
-         * You then construct `numThreads`, each of which is given a different
+         * You then construct `numThreads` threads, each of which is given a different
          * instance of this class as its `Runnable`. Then start each of those
          * threads, wait for them to all terminate, and then return the answer
          * in the shared `Answer` instance.
          */
-        return false;
+
+
+        int len = list.size();
+        int partition = len/numThreads;
+
+        Answer ans = new Answer();
+
+        @SuppressWarnings("unchecked")
+        ThreadedSearch<T>[] ts = (ThreadedSearch<T>[]) new ThreadedSearch[numThreads];
+        for (int i = 0; i < numThreads; i++){
+            ts[i] = new ThreadedSearch<T>(target, list, partition * i, partition * (i+1), ans);
+        }
+
+        Thread[] threads = new Thread[numThreads];
+        for (int i = 0; i < numThreads; i++){
+            threads[i] = new Thread(ts[i]);
+            threads[i].start();
+        }
+        try {
+            for (int i = 0; i < numThreads; i++){
+                threads[i].join();
+            }
+        } catch (InterruptedException exc){
+            System.out.println("Thread interrupted");
+        }
+
+        return ans.getAnswer();
     }
 
     public void run() {
         // Delete this `throw` when you actually implement this method.
-        throw new UnsupportedOperationException();
+        // System.out.println("begin = " + begin + " and end = " + end);
+        // System.out.println("target = " + target);
+        System.out.println(list.get(1));
+        for (int i = begin; i < end; i++){
+            if (list.get(i) == target){
+                System.out.println("Found");
+                answer.setAnswer(true);
+            }
+        }
+        
     }
 
     private class Answer {
